@@ -4,7 +4,7 @@ public class CarExample {
 	public static void simulate() {
 		Car myCar = new Car();
 		
-		myCar.speed = 200;
+//		myCar.speed = 200;
 		myCar.defaultRun();
 	}
 
@@ -14,7 +14,7 @@ public class CarExample {
 		
 		Car myCar = new Car();
 		
-		myCar.speed = 60;
+//		myCar.speed = 60;
 		myCar.defaultRun();
 		
 		Car myCar4 = new Car("그랜저");
