@@ -30,7 +30,7 @@ public class CRUDClass {
 //		dropTable();
 		
 //		Read Table - select
-		selectTable();
+		selectUsers();
 	}
 
 	private void dropTable() {
@@ -49,16 +49,15 @@ public class CRUDClass {
 	}
 
 	private void insertUser() {
-		String sql = "INSERT INTO users(id, name, email, hire_date) VALUES(?, ?, ?, ?)";
+		String sql = "INSERT INTO users(name, email, hire_date) VALUES(?, ?, ?)";
 		try {
 			LocalDate today = LocalDate.now();
 			conn = DBConnection.getConnection();
 			pstmt = conn.prepareStatement(sql);
 			
-			pstmt.setInt(1, 1);
-			pstmt.setString(2, "이주환");
-			pstmt.setString(3, "steal97@naver.com");
-			pstmt.setDate(4, Date.valueOf(today));
+			pstmt.setString(1, "박근철");
+			pstmt.setString(2, "park@naver.com");
+			pstmt.setDate(3, Date.valueOf(today));
 			
 			pstmt.executeUpdate();
 		} catch(Exception e) {
@@ -84,28 +83,48 @@ public class CRUDClass {
 	}
 
 	private void updateTable() {
-		
+	    String sql = "UPDATE users SET name = ?, email = ? WHERE name = ? AND email = ?";
+	    try {
+	        conn = DBConnection.getConnection();
+	        pstmt = conn.prepareStatement(sql);
+	        pstmt.setString(1, "홍길동");
+	        pstmt.setString(2, "hong@example.com");
+	        pstmt.setString(3, "이주환"); // 조건 name
+	        pstmt.setString(4, "steal97@naver.com"); // 조건 email
+
+	        int rows = pstmt.executeUpdate();
+	        if (rows == 0) {
+	            System.out.println("조건에 맞는 사용자가 존재하지 않습니다.");
+	        } else {
+	            System.out.println("수정된 행 수: " + rows);
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    } finally {
+	        DBConnection.close(pstmt, conn);
+	    }
 	}
 
-	private void selectTable() {
-		String sql = "show tables";
-		
-		try {
-			conn = DBConnection.getConnection();
-			pstmt = conn.prepareStatement(sql);
-			rs = pstmt.executeQuery();
-			System.out.println("----- employees 데이터베이스 내부 테이블 확인 -----");
-			
-			while(rs.next()) {
-				String talName = rs.getString("tables_in_employees");
-				String talName2 = rs.getString(1);
-				System.out.println("[" + talName + "--" + talName2 + "]");
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			DBConnection.close(rs, pstmt, conn);
-		}
+	private void selectUsers() {
+	    String sql = "SELECT * FROM users";
+	    try {
+	        conn = DBConnection.getConnection();
+	        pstmt = conn.prepareStatement(sql);
+	        rs = pstmt.executeQuery();
+
+	        while (rs.next()) {
+	            int id = rs.getInt("id");
+	            String name = rs.getString("name");
+	            String email = rs.getString("email");
+	            Date hireDate = rs.getDate("hire_date");
+
+	            System.out.printf("ID: %d, 이름: %s, 이메일: %s, 입사일: %s%n", id, name, email, hireDate);
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    } finally {
+	        DBConnection.close(rs, pstmt, conn);
+	    }
 	}
 
 	private void createTable() {

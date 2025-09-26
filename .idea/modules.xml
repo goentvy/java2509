@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/java2509.iml" filepath="$PROJECT_DIR$/.idea/java2509.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mariadb-connection/mariadb-connection.iml" filepath="$PROJECT_DIR$/mariadb-connection/mariadb-connection.iml" />
     </modules>
   </component>
 </project>
