@@ -50,6 +50,18 @@ public class CRUD {
 			);
 		""";
 		
+		String employee = """
+	        CREATE TABLE Employee (
+	            EmpNo INT PRIMARY KEY AUTO_INCREMENT,
+	            EmpName VARCHAR(30) NOT NULL UNIQUE,
+	            Dept VARCHAR(20) NOT NULL,
+	            HireDate DATE NOT NULL,
+	            Salary INT,
+	            CONSTRAINT CHECK_SALARY CHECK (Salary >= 2000000)
+	        );
+	    """;
+
+		
 		try(Connection conn = DBConnection.getConnection();
 			Statement stmt = conn.createStatement()) {
 			
@@ -57,6 +69,7 @@ public class CRUD {
 	            case "member" -> stmt.executeUpdate(member);
 	            case "rental" -> stmt.executeUpdate(rental);
 	            case "book" -> stmt.executeUpdate(book);
+	            case "employee" -> stmt.executeUpdate(employee);
 	            default -> System.out.println("지원하지 않는 테이블 타입입니다: " + type);
 	        }
 			
@@ -72,6 +85,7 @@ public class CRUD {
 	        case "member" -> "SELECT * FROM member";
 	        case "rental" -> "SELECT * FROM rental";
 	        case "book" -> "SELECT * FROM book";
+	        case "employee" -> "SELECT * FROM employee";
 	        default -> null;
 	    };
 
@@ -108,6 +122,14 @@ public class CRUD {
 	                        rs.getInt("price"), rs.getString("pubyear"));
 	                }
 	            }
+	            case "employee" -> {
+	                while (rs.next()) {
+	                    System.out.printf("사번: %d, 이름: %s, 부서: %s, 입사일: %s, 급여: %d%n",
+	                        rs.getInt("empno"), rs.getString("empname"),
+	                        rs.getString("dept"), rs.getString("hiredate"),
+	                        rs.getInt("salary"));
+	                }
+	            }
 	        }
 
 	    } catch (Exception e) {
@@ -131,6 +153,7 @@ public class CRUD {
 	                    System.out.printf("Member 수정된 행 수: %d%n", rows);
 	                }
 	            }
+	            
 	            case "book" -> {
 	                String sql = "UPDATE book SET title = ?, author = ? WHERE title = ?";
 	                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -142,6 +165,7 @@ public class CRUD {
 	                    System.out.printf("Book 수정된 행 수: %d%n", rows);
 	                }
 	            }
+	            
 	            case "rental" -> {
 	                String sql = "UPDATE rental SET returndate = ? WHERE rentalid = ?";
 	                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -152,6 +176,18 @@ public class CRUD {
 	                    System.out.printf("Rental 수정된 행 수: %d%n", rows);
 	                }
 	            }
+	            
+	            case "employee" -> {
+	                String sql = "UPDATE employee SET salary = ? WHERE empname = ?";
+	                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+	                    Employee emp = (Employee) data;
+	                    pstmt.setInt(1, emp.getSalary());
+	                    pstmt.setString(2, condition[0]); // 기존 이름
+	                    int rows = pstmt.executeUpdate();
+	                    System.out.printf("Employee 수정된 행 수: %d%n", rows);
+	                }
+	            }
+
 	            default -> System.out.println("지원하지 않는 타입입니다: " + type);
 	        }
 	    } catch (Exception e) {
@@ -165,6 +201,7 @@ public class CRUD {
 	        case "member" -> "DELETE FROM member";
 	        case "book" -> "DELETE FROM book";
 	        case "rental" -> "DELETE FROM rental";
+	        case "employee" -> "DELETE FROM employee";
 	        default -> null;
 	    };
 
@@ -227,6 +264,18 @@ public class CRUD {
 	                    System.out.println("Rental 삽입 완료");
 	                }
 	            }
+	            case "employee" -> {
+	                String sql = "INSERT INTO employee(empname, dept, hiredate, salary) VALUES (?, ?, ?, ?)";
+	                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+	                    Employee emp = (Employee) data;
+	                    pstmt.setString(1, emp.getEmpName());
+	                    pstmt.setString(2, emp.getDept());
+	                    pstmt.setString(3, emp.getHireDate());
+	                    pstmt.setInt(4, emp.getSalary());
+	                    pstmt.executeUpdate();
+	                    System.out.println("Employee 삽입 완료");
+	                }
+	            }
 	            default -> System.out.println("지원하지 않는 타입입니다: " + type);
 	        }
 	    } catch (Exception e) {
@@ -256,19 +305,177 @@ public class CRUD {
 		}
 	}
 	
-	// 문제 result 메소드
+	// 공통 출력 로직 헬퍼메서드
+	private void printResultSet(ResultSet rs, String... columns) throws SQLException {
+	    while (rs.next()) {
+	        for (String col : columns) {
+	            System.out.print(rs.getString(col) + "\t");
+	        }
+	        System.out.println();
+	    }
+	}
 	
-	/*
+//	Book 문제 result 메소드
+	
+//	-- (1) 2020년 이후 출판된 도서를 검색하시오.
+	public void bookResult1() {
+	    String sql = "SELECT * FROM book WHERE pubyear >= 2020";
+	    try (Connection conn = DBConnection.getConnection();
+	         PreparedStatement pstmt = conn.prepareStatement(sql);
+	         ResultSet rs = pstmt.executeQuery()) {
 
-	-- (1) 2020년 이후 출판된 도서를 검색하시오.
+	        printResultSet(rs, "bookid", "title", "pubyear");
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
+
+//	-- (2) '홍길동' 회원이 대출한 도서 목록을 출력하시오.
+	public void bookResult2() {
+	    String sql = """
+	        SELECT b.title, b.author, r.rentdate, r.returndate
+	        FROM rental r
+	        JOIN member m ON r.memberid = m.memberid
+	        JOIN book b ON r.bookid = b.bookid
+	        WHERE m.name = '홍길동'
+	    """;
+	    try (Connection conn = DBConnection.getConnection();
+	         PreparedStatement pstmt = conn.prepareStatement(sql);
+	         ResultSet rs = pstmt.executeQuery()) {
+
+	        printResultSet(rs, "title", "author", "rentdate", "returndate");
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
 	
-	-- (2) '홍길동' 회원이 대출한 도서 목록을 출력하시오.
+//	-- (3) 반납하지 않은 도서를 검색하시오.
+	public void bookResult3() {
+	    String sql = """
+	        SELECT r.rentalid, m.name, b.title, r.rentdate
+	        FROM rental r
+	        JOIN member m ON r.memberid = m.memberid
+	        JOIN book b ON r.bookid = b.bookid
+	        WHERE r.returndate IS NULL
+	    """;
+	    try (Connection conn = DBConnection.getConnection();
+	         PreparedStatement pstmt = conn.prepareStatement(sql);
+	         ResultSet rs = pstmt.executeQuery()) {
+
+	        printResultSet(rs, "rentalid", "name", "title", "rentdate");
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
+
 	
-	-- (3) 반납하지 않은 도서를 검색하시오.
+//	-- (4) 도서별 대출 횟수를 출력하시오.
+	public void bookResult4() {
+	    String sql = """
+	        SELECT b.title, COUNT(*) AS rent_count
+	        FROM rental r
+	        JOIN book b ON r.bookid = b.bookid
+	        GROUP BY b.title
+	        ORDER BY rent_count DESC
+	    """;
+	    try (Connection conn = DBConnection.getConnection();
+	         PreparedStatement pstmt = conn.prepareStatement(sql);
+	         ResultSet rs = pstmt.executeQuery()) {
+
+	        printResultSet(rs, "title", "rent_count");
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
 	
-	-- (4) 도서별 대출 횟수를 출력하시오.
+//	-- (5) 가격이 가장 비싼 도서를 출력하시오.
+	public void bookResult5() {
+	    String sql = """
+	        SELECT * FROM book
+	        WHERE price = (SELECT MAX(price) FROM book)
+	    """;
+	    try (Connection conn = DBConnection.getConnection();
+	         PreparedStatement pstmt = conn.prepareStatement(sql);
+	         ResultSet rs = pstmt.executeQuery()) {
+
+	        printResultSet(rs, "bookid", "title", "price");
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
 	
-	-- (5) 가격이 가장 비싼 도서를 출력하시오.
+//	Employee 문제 result 메소드
 	
-	 */
+	//개발부 사원 조회
+	public void empolyeeResult1() {
+	 String sql = "SELECT empno, empname, salary FROM employee WHERE dept = '개발부'";
+	 try (Connection conn = DBConnection.getConnection();
+	      PreparedStatement pstmt = conn.prepareStatement(sql);
+	      ResultSet rs = pstmt.executeQuery()) {
+	     printResultSet(rs, "empno", "empname", "salary");
+	 } catch (Exception e) {
+	     e.printStackTrace();
+	 }
+	}
+
+	//급여 300만 이상 사원 조회
+	public void empolyeeResult2() {
+	 String sql = "SELECT empname, dept FROM employee WHERE salary >= 3000000";
+	 try (Connection conn = DBConnection.getConnection();
+	      PreparedStatement pstmt = conn.prepareStatement(sql);
+	      ResultSet rs = pstmt.executeQuery()) {
+	     printResultSet(rs, "empname", "dept");
+	 } catch (Exception e) {
+	     e.printStackTrace();
+	 }
+	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

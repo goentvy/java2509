@@ -19,53 +19,12 @@ public class Book {
 	}
 	
 	// Getter & Setter
-	public int getBookID() {
-		return BookID;
-	}
-
-	public void setBookID(int bookID) {
-		BookID = bookID;
-	}
-
-	public String getTitle() {
-		return Title;
-	}
-
-	public void setTitle(String title) {
-		Title = title;
-	}
-
-	public String getAuthor() {
-		return Author;
-	}
-
-	public void setAuthor(String author) {
-		Author = author;
-	}
-
-	public String getPublisher() {
-		return Publisher;
-	}
-
-	public void setPublisher(String publisher) {
-		Publisher = publisher;
-	}
-
-	public int getPrice() {
-		return Price;
-	}
-
-	public void setPrice(int price) {
-		Price = price;
-	}
-
-	public String getPubYear() {
-		return PubYear;
-	}
-
-	public void setPubYear(String pubYear) {
-		PubYear = pubYear;
-	}
+	public int getBookID() { return BookID; }
+	public String getTitle() { return Title; }
+	public String getAuthor() { return Author; }
+	public String getPublisher() { return Publisher; }
+	public int getPrice() { return Price; }
+	public String getPubYear() { return PubYear; }
 	
 	// toString() - 디버깅용
     @Override
